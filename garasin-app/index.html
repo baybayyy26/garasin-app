@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GARASIN — Garasi Digital Motor Perantau</title>
+  <meta name="description" content="Pulang tenang, motor aman & sehat. Garasin, beres!">
+
+  <!-- Favicon (logo perisai) -->
+  <link rel="icon" type="image/png" href="public/img/logo-mark.png">
+
+  <!-- Praambung ke Google Fonts (degradasi ke font sistem bila offline) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Gaya: token dasar -> tata letak -> komponen -->
+  <link rel="stylesheet" href="public/css/base.css">
+  <link rel="stylesheet" href="public/css/layout.css">
+  <link rel="stylesheet" href="public/css/components.css">
+</head>
+<body>
+  <!-- Seluruh antarmuka digambar di sini oleh JavaScript -->
+  <div id="app"></div>
+
+  <!--
+    Urutan pemuatan PENTING (tanpa modul/bundler agar bisa dibuka langsung):
+    1) store  -> lapisan data
+    2) ui     -> fungsi bantu tampilan
+    3) auth   -> autentikasi
+    4) komponen -> potongan tampilan bersama
+    5) pages/* -> tiap halaman peran
+    6) router -> pengatur navigasi
+    7) app    -> titik mula (dijalankan terakhir)
+  -->
+  <script src="public/js/store.js"></script>
+  <script src="public/js/ui.js"></script>
+  <script src="public/js/auth.js"></script>
+  <script src="public/js/komponen.js"></script>
+  <script src="public/js/pages/login.js"></script>
+  <script src="public/js/pages/pelanggan.js"></script>
+  <script src="public/js/pages/admin.js"></script>
+  <script src="public/js/pages/owner.js"></script>
+  <script src="public/js/router.js"></script>
+  <script src="public/js/app.js"></script>
+</body>
+</html>

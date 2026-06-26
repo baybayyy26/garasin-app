@@ -1,0 +1,139 @@
+/* ==========================================================================
+   GARASIN — layout.css
+   Kerangka aplikasi: sidebar + topbar + konten. Halaman login. Responsif.
+   ========================================================================== */
+
+/* ====== LAYOUT APLIKASI (setelah login) ====== */
+.app { display: grid; grid-template-columns: 256px 1fr; min-height: 100vh; }
+
+/* --- Sidebar (grafit / premium) --- */
+.sidebar {
+  background: var(--grafit); color: #fff;
+  display: flex; flex-direction: column;
+  padding: 22px 16px; gap: 8px;
+  position: sticky; top: 0; height: 100vh;
+}
+.brand { display: flex; align-items: center; gap: 11px; padding: 4px 8px 18px; }
+.brand .mark { height: 36px; width: auto; }
+.brand .word { height: 17px; width: auto; }
+.brand-name { font-weight: 800; font-size: 1.25rem; letter-spacing: -.02em; }
+.brand-name span { color: var(--merah); }
+.brand-sub { font-size: .64rem; letter-spacing: .12em; text-transform: uppercase; color: #8A90A0; margin-top: 4px; }
+.auth-mark { margin-bottom: 14px; }
+
+.nav-label {
+  font-size: .64rem; letter-spacing: .16em; text-transform: uppercase;
+  color: #6B7280; padding: 14px 12px 6px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 12px; border-radius: var(--radius-sm);
+  color: #C7CBD4; font-weight: 600; font-size: .92rem;
+  transition: background .15s, color .15s;
+}
+.nav-item .ico { width: 20px; text-align: center; font-size: 1.05rem; }
+.nav-item:hover { background: var(--grafit-2); color: #fff; }
+.nav-item.active { background: var(--merah); color: #fff; }
+.nav-item.active:hover { background: var(--merah); }
+.sidebar-foot { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--grafit-3); }
+
+/* --- Topbar --- */
+.main { display: flex; flex-direction: column; min-width: 0; }
+.topbar {
+  background: var(--putih); border-bottom: 1px solid var(--garis);
+  padding: 14px 28px; display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 20;
+}
+.topbar-title h2 { font-size: 1.25rem; }
+.topbar-title p { font-size: .82rem; color: var(--teks-redup); }
+.topbar-user { display: flex; align-items: center; gap: 14px; }
+.avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--merah); color: #fff; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.user-meta { text-align: right; line-height: 1.25; }
+.user-meta .nm { font-weight: 700; font-size: .9rem; }
+.user-meta .rl { font-size: .72rem; color: var(--teks-redup); text-transform: capitalize; }
+
+/* --- Area konten --- */
+.content { padding: 28px; max-width: 1180px; width: 100%; }
+.page-head { margin-bottom: 22px; }
+.page-head h1 { font-size: 1.7rem; }
+.page-head p { color: var(--teks-redup); margin-top: 2px; }
+
+/* Tombol burger (mobile) */
+.burger { display: none; font-size: 1.5rem; color: var(--teks); }
+
+/* ====== HALAMAN LOGIN ====== */
+.auth-wrap {
+  min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr;
+  background: var(--grafit);
+}
+/* Panel kiri: branding */
+.auth-hero {
+  position: relative; overflow: hidden;
+  padding: 56px; display: flex; flex-direction: column; justify-content: space-between;
+  color: #fff;
+  background:
+    radial-gradient(900px 500px at 80% -10%, rgba(225,29,46,.28), transparent 60%),
+    radial-gradient(700px 600px at -10% 110%, rgba(225,29,46,.16), transparent 60%);
+}
+.auth-hero .brand-name { font-size: 1.6rem; }
+.auth-hero-mid { max-width: 420px; }
+.auth-hero-mid .tag { font-size: 2.4rem; font-weight: 800; line-height: 1.12; letter-spacing: -.03em; }
+.auth-hero-mid .tag .beres { color: var(--merah); }
+.auth-hero-mid p { margin-top: 14px; color: #B7BCC8; font-size: 1rem; }
+.auth-values { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 26px; }
+.value-chip {
+  border: 1px solid var(--grafit-3); border-radius: 999px;
+  padding: 7px 14px; font-size: .78rem; font-weight: 600; color: #D6D9E0;
+}
+.auth-shield {
+  position: absolute; right: -60px; bottom: -50px; width: 360px; opacity: .07;
+  transform: rotate(-8deg); pointer-events: none;
+}
+
+/* Panel kanan: form */
+.auth-form-side { background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 32px; }
+.auth-card {
+  width: 100%; max-width: 400px; background: var(--putih);
+  border-radius: var(--radius-lg); padding: 36px; box-shadow: var(--shadow);
+}
+.auth-card h2 { font-size: 1.55rem; }
+.auth-card .sub { color: var(--teks-redup); margin: 4px 0 24px; }
+.demo-box {
+  background: var(--merah-lembut); border: 1px solid #F6CDD2;
+  border-radius: var(--radius); padding: 14px 16px; margin-top: 22px;
+}
+.demo-box .eyebrow { color: var(--merah-tua); }
+.demo-acc {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer;
+  transition: background .12s;
+}
+.demo-acc:hover { background: #fff; }
+.demo-acc .rol { font-weight: 700; font-size: .82rem; }
+.demo-acc .em { font-size: .76rem; color: var(--teks-redup); font-family: var(--mono); }
+.auth-toggle { text-align: center; margin-top: 18px; font-size: .9rem; color: var(--teks-redup); }
+.auth-toggle b { color: var(--merah); cursor: pointer; font-weight: 700; }
+
+/* ====== RESPONSIF ====== */
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; left: 0; top: 0; z-index: 60; width: 256px;
+    transform: translateX(-110%); transition: transform .22s ease;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .burger { display: block; }
+  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 50; }
+  .content { padding: 18px; }
+  .auth-wrap { grid-template-columns: 1fr; }
+  .auth-hero { display: none; }
+}
+@media (max-width: 520px) {
+  .topbar { padding: 12px 16px; }
+  .user-meta { display: none; }
+  .auth-card { padding: 26px 22px; }
+}
