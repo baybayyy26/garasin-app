@@ -16,7 +16,7 @@ window.G = window.G || {};
   // Coba login → { ok, pesan } | { ok, user }
   async function login(email, password) {
     try {
-      const data = await G.store.req_('POST', '/auth/login', { email, password });
+      const data = await G.store.req_('POST', '/auth?action=login', { email, password });
       G.store.setSession(data.token, data.user);
       return { ok: true, user: data.user };
     } catch (err) {
@@ -27,7 +27,7 @@ window.G = window.G || {};
   // Daftar pelanggan baru → { ok, pesan } | { ok, user }
   async function daftar({ nama, email, no_hp, asal, password }) {
     try {
-      const data = await G.store.req_('POST', '/auth/register', { nama, email, no_hp, asal, password });
+      const data = await G.store.req_('POST', '/auth?action=register', { nama, email, no_hp, asal, password });
       G.store.setSession(data.token, data.user);
       return { ok: true, user: data.user };
     } catch (err) {

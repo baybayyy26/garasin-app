@@ -77,11 +77,11 @@ window.G = window.G || {};
     cachedUser:    getCachedUser,
 
     // ----- CRUD generik (dipetakan ke endpoint REST) -----
-    all:    (table)           => get_(`/${table}`),
-    get:    (table, id)       => get_(`/${table}/${id}`),
-    insert: (table, data)     => post_(`/${table}`, data),
-    update: (table, id, patch)=> put_(`/${table}/${id}`, patch),
-    remove: (table, id)       => del_(`/${table}/${id}`),
+    all:    (table)            => get_(`/${table}`),
+    get:    (table, id)        => get_(`/${table}?id=${id}`),
+    insert: (table, data)      => post_(`/${table}`, data),
+    update: (table, id, patch) => put_(`/${table}?id=${id}`, patch),
+    remove: (table, id)        => del_(`/${table}?id=${id}`),
 
     // find tidak bisa langsung jadi API call karena predicatenya JS function.
     // Solusi: ambil semua lalu filter di client. Untuk dataset kecil ini OK.
