@@ -1,95 +1,109 @@
 /* ==========================================================================
-   GARASIN — store.js
-   Lapisan data berbasis localStorage (dengan cadangan memori bila localStorage
-   tidak tersedia, mis. saat dibuka via file://).
-   Data dimulai KOSONG (siap diisi data asli). Hanya akun owner & admin yang
-   disiapkan agar bisa langsung login; pelanggan mendaftar sendiri.
+   GARASIN — store.js (API Client)
+   Menggantikan implementasi localStorage. Interface G.store.* dipertahankan
+   agar halaman (pelanggan.js, admin.js, owner.js) tidak perlu banyak berubah.
+   Semua method sekarang async (return Promise).
    ========================================================================== */
 
 window.G = window.G || {};
 
 (function () {
-  const DB_KEY = 'garasin_db';
-  const SESSION_KEY = 'garasin_session';
-  const mem = {};
+  const BASE = '/api';
+  const TOKEN_KEY = 'garasin_token';
+  const USER_KEY  = 'garasin_user';
 
-  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return (k in mem) ? mem[k] : null; } }
-  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { mem[k] = v; } }
-  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) { delete mem[k]; } }
+  // ========================= TOKEN / SESSION =========================
+  function getToken()       { return localStorage.getItem(TOKEN_KEY); }
+  function setToken(t)      { localStorage.setItem(TOKEN_KEY, t); }
+  function clearToken()     { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); }
+  function getCachedUser()  { try { return JSON.parse(localStorage.getItem(USER_KEY)); } catch { return null; } }
+  function setCachedUser(u) { localStorage.setItem(USER_KEY, JSON.stringify(u)); }
 
-  // ====================== DATA AWAL ======================
-  // Hanya akun pengelola. Semua data operasional kosong → diisi saat dipakai.
-  function seed() {
-    return {
-      users: [
-        { id: 1, nama: 'Owner GARASIN', email: 'owner@garasin.id', password: 'garasin123', role: 'owner', no_hp: '0812-0000-0001', asal: 'Malang' },
-        { id: 2, nama: 'Admin GARASIN', email: 'admin@garasin.id', password: 'garasin123', role: 'admin', no_hp: '0812-0000-0002', asal: 'Malang' },
-      ],
-      motor: [],
-      booking: [],
-      perawatan: [],
-      pembayaran: [],
-      notifikasi: [],
-      config: {
-        harga_periode: 200000,        // harga per periode (bisa diubah owner)
-        kapasitas_total: 6,           // kapasitas garasi: 6 slot
-        target_retensi: 65,           // persen
-        cac: 28000,                   // biaya akuisisi / pelanggan
-        target_pendapatan_th1: 12000000,
-        north_star_label: 'Motor tersimpan / periode liburan',
-        rekening_bank: 'SeaBank',
-        rekening_no: '9012 3456 7890',
-        rekening_nama: 'GARASIN',
-        wa_admin: '6281200000002',    // nomor WhatsApp admin (format 62...)
-        // Rincian harga (karena belum ada pilihan paket) — dalam persen dari harga
-        rincian: [
-          { label: 'Slot penyimpanan + keamanan 24 jam (CCTV)', persen: 50 },
-          { label: 'Perawatan rutin (pemanasan mesin, cek aki & ban)', persen: 35 },
-          { label: 'Laporan kondisi berkala (foto/video via WhatsApp)', persen: 15 },
-        ],
-      },
-    };
+  // ========================= HTTP HELPER =========================
+  async function req(method, path, body) {
+    const headers = { 'Content-Type': 'application/json' };
+    const token = getToken();
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+
+    const res = await fetch(BASE + path, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+
+    const data = await res.json();
+
+    // Token kedaluwarsa → paksa logout
+    if (res.status === 401) {
+      clearToken();
+      location.hash = '#/login';
+      throw Object.assign(new Error(data.error || 'Sesi habis. Silakan login ulang.'), { status: 401 });
+    }
+
+    if (!res.ok) {
+      throw Object.assign(new Error(data.error || 'Request gagal'), { status: res.status });
+    }
+
+    return data.data;
   }
 
-  function init() { if (!lsGet(DB_KEY)) lsSet(DB_KEY, JSON.stringify(seed())); }
-  function reset() { lsSet(DB_KEY, JSON.stringify(seed())); lsDel(SESSION_KEY); }
+  const get_  = (path)        => req('GET',    path);
+  const post_ = (path, body)  => req('POST',   path, body);
+  const put_  = (path, body)  => req('PUT',    path, body);
+  const del_  = (path)        => req('DELETE', path);
 
-  function getDB() { return JSON.parse(lsGet(DB_KEY) || '{}'); }
-  function saveDB(db) { lsSet(DB_KEY, JSON.stringify(db)); }
-
-  function all(table) { return getDB()[table] || []; }
-  function get(table, id) { return all(table).find(r => r.id === Number(id)) || null; }
-  function find(table, pred) { return all(table).filter(pred); }
-  function nextId(table) { const r = all(table); return r.length ? Math.max(...r.map(x => x.id)) + 1 : 1; }
-
-  function insert(table, obj) {
-    const db = getDB();
-    obj.id = obj.id || (db[table].length ? Math.max(...db[table].map(x => x.id)) + 1 : 1);
-    db[table].push(obj); saveDB(db); return obj;
-  }
-  function update(table, id, patch) {
-    const db = getDB();
-    const i = db[table].findIndex(r => r.id === Number(id));
-    if (i > -1) { db[table][i] = Object.assign({}, db[table][i], patch); saveDB(db); return db[table][i]; }
-    return null;
-  }
-  function remove(table, id) {
-    const db = getDB();
-    db[table] = db[table].filter(r => r.id !== Number(id)); saveDB(db);
+  // req_ di-expose agar auth.js bisa memanggil /auth/login & /auth/register
+  // tanpa token (belum login)
+  async function req_(method, path, body) {
+    const res = await fetch(BASE + path, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json();
+    if (!res.ok) throw Object.assign(new Error(data.error || 'Request gagal'), { status: res.status });
+    return data.data;
   }
 
-  function config() { return getDB().config || {}; }
-  function updateConfig(patch) {
-    const db = getDB();
-    db.config = Object.assign({}, db.config, patch); saveDB(db); return db.config;
-  }
+  // ========================= STORE API =========================
+  // Catatan: interface sengaja mirip store lama agar halaman mudah dimigrasi.
+  // Perbedaan utama: semua method sekarang async.
 
-  function setSession(userId) { lsSet(SESSION_KEY, JSON.stringify({ userId })); }
-  function clearSession() { lsDel(SESSION_KEY); }
-  function sessionUserId() { const s = JSON.parse(lsGet(SESSION_KEY) || 'null'); return s ? s.userId : null; }
+  const store = {
+    // ----- Token / session -----
+    setSession:    (token, user) => { setToken(token); if (user) setCachedUser(user); },
+    clearSession:  clearToken,
+    sessionToken:  getToken,
+    cachedUser:    getCachedUser,
 
-  G.store = {
-    init, reset, getDB, saveDB, all, get, find, insert, update, remove,
-    nextId, config, updateConfig, setSession, clearSession, sessionUserId,
+    // ----- CRUD generik (dipetakan ke endpoint REST) -----
+    all:    (table)           => get_(`/${table}`),
+    get:    (table, id)       => get_(`/${table}/${id}`),
+    insert: (table, data)     => post_(`/${table}`, data),
+    update: (table, id, patch)=> put_(`/${table}/${id}`, patch),
+    remove: (table, id)       => del_(`/${table}/${id}`),
+
+    // find tidak bisa langsung jadi API call karena predicatenya JS function.
+    // Solusi: ambil semua lalu filter di client. Untuk dataset kecil ini OK.
+    find: async (table, pred) => {
+      const rows = await get_(`/${table}`);
+      return Array.isArray(rows) ? rows.filter(pred) : [];
+    },
+
+    // ----- Config -----
+    config:       ()      => get_('/config'),
+    updateConfig: (patch) => put_('/config', patch),
+
+    // ----- Shorthand khusus -----
+    tandaiNotifDibaca: () => put_('/notifikasi', {}),
+
+    // ----- Raw request (tanpa token, untuk auth endpoints) -----
+    req_,
+
+    // ----- Lifecycle -----
+    init:  () => Promise.resolve(), // database sudah di cloud
+    reset: () => Promise.resolve(), // disabled di production
   };
+
+  G.store = store;
 })();

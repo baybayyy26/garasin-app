@@ -69,6 +69,15 @@ window.G = window.G || {};
     });
   }
 
+  // ====================== LOADING STATE ======================
+  function loading(container, pesan) {
+    container.innerHTML = `<div class="loading-box"><span class="spinner"></span><span>${pesan || 'Memuat...'}</span></div>`;
+  }
+  function stopLoading(container) {
+    const lb = container.querySelector('.loading-box');
+    if (lb) lb.remove();
+  }
+
   // ====================== TOAST ======================
   function ensureToastArea() {
     let a = document.querySelector('.toast-area');
@@ -139,9 +148,21 @@ window.G = window.G || {};
     return `<div class="empty"><div class="em-ico">${ikon}</div><h4>${judul}</h4><p>${pesan || ''}</p></div>`;
   }
 
+  // Sanitasi HTML untuk cegah XSS saat output ke innerHTML
+  function escapeHTML(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   // Bangun tautan WhatsApp (wa.me) dengan pesan terisi
+  // Konversi nomor lokal 08xx → 628xx agar link wa.me valid
   function waLink(nomor, pesan) {
-    const no = String(nomor || '').replace(/[^0-9]/g, '');
+    let no = String(nomor || '').replace(/[^0-9]/g, '');
+    if (no.startsWith('0')) no = '62' + no.slice(1);
     return 'https://wa.me/' + no + (pesan ? '?text=' + encodeURIComponent(pesan) : '');
   }
 
@@ -164,6 +185,7 @@ window.G = window.G || {};
     rupiah, rupiahSingkat, tanggal, hariIni, sisaHari,
     badgeStatus, kondisiPill, inisial, fileToDataURL,
     toast, modal, tutupModal, konfirmasi, empty,
-    waLink, hitungRincian, rekening,
+    waLink, hitungRincian, rekening, escapeHTML,
+    loading, stopLoading,
   };
 })();

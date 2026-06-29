@@ -242,6 +242,20 @@ table.tbl { width: 100%; border-collapse: collapse; background: #fff; min-width:
 .faq[open] summary::after { transform: rotate(45deg); }
 .faq p { padding: 0 4px 14px; color: var(--teks-redup); font-size: .9rem; }
 
+/* ====== LOADING STATE ====== */
+.loading-box {
+  display: flex; align-items: center; gap: 12px;
+  padding: 40px 20px; justify-content: center; color: var(--teks-redup);
+  font-weight: 600; font-size: .9rem;
+}
+.spinner {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 3px solid var(--garis);
+  border-top-color: var(--merah);
+  animation: spin .7s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* ====== DAFTAR LANGKAH (ordered) ====== */
 ol.langkah { counter-reset: l; display: flex; flex-direction: column; gap: 10px; }
 ol.langkah li { counter-increment: l; position: relative; padding-left: 38px; font-size: .9rem; }

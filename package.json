@@ -1,0 +1,19 @@
+{
+  "name": "garasin-app",
+  "version": "1.0.0",
+  "description": "Garasi Digital Motor Perantau — fullstack Vercel deployment",
+  "main": "index.js",
+  "scripts": {
+    "setup-db": "node database/setup.js"
+  },
+  "dependencies": {
+    "@vercel/postgres": "^0.10.0",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^17.4.2",
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^9.0.1"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}

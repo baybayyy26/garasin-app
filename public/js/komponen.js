@@ -66,19 +66,63 @@ window.G = window.G || {};
       </div>`).join('')}</div>`;
   }
 
-  // Modal: riwayat kondisi sebuah motor
-  function bukaRiwayatKondisi(motor) {
+  // Modal: riwayat kondisi sebuah motor (async — fetch dari API)
+  async function bukaRiwayatKondisi(motor) {
     ui.modal({
-      judul: `Riwayat Kondisi — ${motor.tipe}`,
+      judul: `Riwayat Kondisi — ${motor.tipe || 'Motor'}`,
       lebar: 580,
-      isiHTML: `<div class="between mb-2"><span class="plat" style="font-size:1.05rem">${motor.plat}</span>
-                <span class="muted kecil">${motor.warna} · ${motor.cc} cc</span></div>
-                ${timelinePerawatan(motor.id)}`,
+      isiHTML: `<div class="between mb-2">
+                  <span class="plat" style="font-size:1.05rem">${motor.plat || ''}</span>
+                  <span class="muted kecil">${motor.warna || ''} · ${motor.cc || ''} cc</span>
+                </div>
+                <div id="riwayatBox">${ui.empty('🔧', 'Memuat...', '')}</div>`,
+      onMount(body) {
+        G.store.find('perawatan', p => p.motor_id === Number(motor.id))
+          .then(list => {
+            body.querySelector('#riwayatBox').innerHTML = timelinePerawatanDariList(list);
+          })
+          .catch(() => {
+            body.querySelector('#riwayatBox').innerHTML = ui.empty('❌', 'Gagal memuat data', '');
+          });
+      },
     });
+  }
+
+  // Versi yang menerima objek perawatan langsung (untuk async context)
+  function statusKesehatanDariP(p) {
+    if (!p) return null;
+    const nilai = [p.status_aki, p.status_ban, p.status_mesin];
+    if (nilai.includes('buruk')) return { label: 'Perlu tindakan', kelas: 'b-merah' };
+    if (nilai.includes('perhatian')) return { label: 'Perlu perhatian', kelas: 'b-kuning' };
+    return { label: 'Sehat', kelas: 'b-hijau' };
+  }
+  function badgeKesehatanDariP(p) {
+    const s = statusKesehatanDariP(p);
+    return s ? `<span class="badge ${s.kelas}">${s.label}</span>` : '<span class="badge b-abu">Belum dicek</span>';
+  }
+
+  // Timeline dari array perawatan yang sudah di-fetch sebelumnya
+  function timelinePerawatanDariList(list) {
+    const sorted = [...list].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+    if (!sorted.length) return ui.empty('🔧', 'Belum ada laporan perawatan', 'Laporan kondisi harian akan muncul di sini.');
+    return `<div class="timeline">${sorted.map(p => `
+      <div class="tl-item">
+        <div class="between" style="align-items:flex-start;gap:14px">
+          <div class="grow">
+            <div class="tl-date">${ui.tanggal(p.tanggal)}</div>
+            <div class="tl-meta">Petugas: ${ui.escapeHTML ? ui.escapeHTML(p.petugas || '') : (p.petugas || '')}</div>
+            <div class="mt-1">${ringkasanKondisi(p)}</div>
+            ${p.catatan ? `<p class="kecil mt-1">"${p.catatan}"</p>` : ''}
+          </div>
+          <div style="width:160px;flex-shrink:0">${fotoKondisi(p)}</div>
+        </div>
+      </div>`).join('')}</div>`;
   }
 
   G.komponen = {
     fotoKondisi, ringkasanKondisi, perawatanTerbaru,
-    statusKesehatan, badgeKesehatan, timelinePerawatan, bukaRiwayatKondisi,
+    statusKesehatan, badgeKesehatan, timelinePerawatan,
+    badgeKesehatanDariP, statusKesehatanDariP, timelinePerawatanDariList,
+    bukaRiwayatKondisi,
   };
 })();

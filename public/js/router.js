@@ -72,6 +72,7 @@ window.G = window.G || {};
   }
 
   function gambarKerangka(user, activePath) {
+    const esc = G.ui.escapeHTML;
     const [judul, subjudul] = META[activePath] || ['GARASIN', ''];
     const menu = NAV[user.role].map(it => `
       <a class="nav-item ${it.path === activePath ? 'active' : ''}" href="${it.path}">
@@ -83,7 +84,7 @@ window.G = window.G || {};
           <div class="brand">
             <img src="public/img/logo-mark.png" alt="" class="mark">
             <div><img src="public/img/logo-word.png" alt="GARASIN" class="word">
-              <div class="brand-sub">${user.role}</div></div>
+              <div class="brand-sub">${esc(user.role)}</div></div>
           </div>
           <div class="nav-label">Menu</div>
           ${menu}
@@ -97,10 +98,10 @@ window.G = window.G || {};
           <header class="topbar">
             <div class="center gap-2">
               <button class="burger" id="burger" aria-label="Menu">☰</button>
-              <div class="topbar-title"><h2>${judul}</h2><p>${subjudul}</p></div>
+              <div class="topbar-title"><h2>${esc(judul)}</h2><p>${esc(subjudul)}</p></div>
             </div>
             <div class="topbar-user">
-              <div class="user-meta"><div class="nm">${user.nama}</div><div class="rl">${user.role}</div></div>
+              <div class="user-meta"><div class="nm">${esc(user.nama)}</div><div class="rl">${esc(user.role)}</div></div>
               <div class="avatar">${G.ui.inisial(user.nama)}</div>
             </div>
           </header>

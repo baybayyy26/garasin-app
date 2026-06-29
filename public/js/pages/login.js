@@ -1,7 +1,6 @@
 /* ==========================================================================
    GARASIN — pages/login.js
-   Halaman masuk & daftar. Tampilan bersih: tanpa kotak akun demo.
-   Akun owner/admin dikelola terpisah; pelanggan mendaftar sendiri.
+   Halaman masuk & daftar. login() dan daftar() sekarang async (memanggil API).
    ========================================================================== */
 
 window.G = window.G || {};
@@ -85,23 +84,32 @@ G.pages.login = function (root) {
       <div class="auth-toggle">Sudah punya akun? <b id="toLogin">Masuk di sini</b></div>`;
   }
 
+  function setLoading(btn, busy) {
+    btn.disabled = busy;
+    btn.textContent = busy ? 'Memuat...' : (btn.id === 'btnLogin' ? 'Masuk' : 'Buat akun');
+  }
+
   function wireLogin(card) {
-    const masuk = () => {
-      const email = card.querySelector('#lEmail').value;
+    const btn = card.querySelector('#btnLogin');
+    const masuk = async () => {
+      const email = card.querySelector('#lEmail').value.trim();
       const pass = card.querySelector('#lPass').value;
       if (!email || !pass) return ui.toast('Email & sandi wajib diisi.', 'err');
-      const r = auth.login(email, pass);
+      setLoading(btn, true);
+      const r = await auth.login(email, pass);
+      setLoading(btn, false);
       if (!r.ok) return ui.toast(r.pesan, 'err');
       ui.toast('Berhasil masuk. Selamat datang, ' + r.user.nama.split(' ')[0] + '!');
       location.hash = auth.berandaPeran(r.user.role);
     };
-    card.querySelector('#btnLogin').addEventListener('click', masuk);
+    btn.addEventListener('click', masuk);
     card.querySelector('#lPass').addEventListener('keydown', e => { if (e.key === 'Enter') masuk(); });
     card.querySelector('#toDaftar').addEventListener('click', () => { mode = 'daftar'; renderCard(); });
   }
 
   function wireDaftar(card) {
-    card.querySelector('#btnDaftar').addEventListener('click', () => {
+    const btn = card.querySelector('#btnDaftar');
+    btn.addEventListener('click', async () => {
       const data = {
         nama: card.querySelector('#dNama').value.trim(),
         email: card.querySelector('#dEmail').value.trim(),
@@ -111,7 +119,10 @@ G.pages.login = function (root) {
       };
       if (!data.nama || !data.email || !data.password) return ui.toast('Nama, email & sandi wajib diisi.', 'err');
       if (data.password.length < 6) return ui.toast('Sandi minimal 6 karakter.', 'err');
-      const r = auth.daftar(data);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) return ui.toast('Format email tidak valid.', 'err');
+      setLoading(btn, true);
+      const r = await auth.daftar(data);
+      setLoading(btn, false);
       if (!r.ok) return ui.toast(r.pesan, 'err');
       ui.toast('Akun dibuat. Selamat datang di GARASIN!');
       location.hash = '#/pelanggan';

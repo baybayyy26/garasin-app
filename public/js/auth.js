@@ -1,44 +1,42 @@
 /* ==========================================================================
    GARASIN — auth.js
-   Autentikasi sederhana berbasis data lokal: login, daftar, sesi, logout.
-   CATATAN: sandi disimpan apa adanya — ini PROTOTIPE untuk demo/tugas,
-   bukan untuk produksi. Di versi nyata, sandi wajib di-hash di server.
+   Autentikasi berbasis JWT. Token disimpan di localStorage (bukan data user).
+   login() & daftar() memanggil backend API dan menyimpan JWT yang dikembalikan.
+   userAktif() membaca data user dari cache localStorage (di-set saat login).
    ========================================================================== */
 
 window.G = window.G || {};
 
 (function () {
-  // User yang sedang login (atau null)
+  // User yang sedang login — baca dari cache (set saat login/daftar)
   function userAktif() {
-    const id = G.store.sessionUserId();
-    return id ? G.store.get('users', id) : null;
+    return G.store.cachedUser();
   }
 
-  // Coba login -> { ok, pesan }
-  function login(email, password) {
-    const u = G.store.find('users', x => x.email.toLowerCase() === String(email).toLowerCase().trim())[0];
-    if (!u) return { ok: false, pesan: 'Email tidak terdaftar.' };
-    if (u.password !== password) return { ok: false, pesan: 'Kata sandi salah.' };
-    G.store.setSession(u.id);
-    return { ok: true, user: u };
+  // Coba login → { ok, pesan } | { ok, user }
+  async function login(email, password) {
+    try {
+      const data = await G.store.req_('POST', '/auth/login', { email, password });
+      G.store.setSession(data.token, data.user);
+      return { ok: true, user: data.user };
+    } catch (err) {
+      return { ok: false, pesan: err.message };
+    }
   }
 
-  // Daftar pelanggan baru -> { ok, pesan }
-  function daftar({ nama, email, no_hp, asal, password }) {
-    email = String(email).toLowerCase().trim();
-    if (G.store.find('users', x => x.email.toLowerCase() === email).length)
-      return { ok: false, pesan: 'Email sudah dipakai.' };
-    const u = G.store.insert('users', {
-      nama: nama.trim(), email, no_hp: no_hp || '-', asal: asal || '-',
-      password, role: 'pelanggan',
-    });
-    G.store.setSession(u.id);
-    return { ok: true, user: u };
+  // Daftar pelanggan baru → { ok, pesan } | { ok, user }
+  async function daftar({ nama, email, no_hp, asal, password }) {
+    try {
+      const data = await G.store.req_('POST', '/auth/register', { nama, email, no_hp, asal, password });
+      G.store.setSession(data.token, data.user);
+      return { ok: true, user: data.user };
+    } catch (err) {
+      return { ok: false, pesan: err.message };
+    }
   }
 
   function logout() { G.store.clearSession(); location.hash = '#/login'; }
 
-  // Halaman beranda sesuai peran
   function berandaPeran(role) {
     return { owner: '#/owner', admin: '#/admin', pelanggan: '#/pelanggan' }[role] || '#/login';
   }
