@@ -29,15 +29,25 @@ module.exports = async function handler(req, res) {
 
       const motorId = req.query.motor_id ? Number(req.query.motor_id) : null;
 
-      // Pelanggan hanya bisa lihat perawatan motor miliknya (via ?motor_id=)
+      // Pelanggan: hanya bisa lihat perawatan motor miliknya
       if (user.role === 'pelanggan') {
-        if (!motorId) return fail(res, 'Akses ditolak. Gunakan ?motor_id=X', 403);
-        const { rows: mRows } = await sql`SELECT user_id FROM motor WHERE id = ${motorId} LIMIT 1`;
-        if (!mRows.length || mRows[0].user_id !== user.id) return fail(res, 'Akses ditolak.', 403);
+        if (motorId) {
+          // ?motor_id= tersedia → pastikan motor milik pelanggan ini
+          const { rows: mRows } = await sql`SELECT user_id FROM motor WHERE id = ${motorId} LIMIT 1`;
+          if (!mRows.length || mRows[0].user_id !== user.id) return fail(res, 'Akses ditolak.', 403);
+          const { rows } = await sql`
+            SELECT p.*, m.plat, m.tipe FROM perawatan p
+            JOIN motor m ON m.id = p.motor_id
+            WHERE p.motor_id = ${motorId} ORDER BY p.tanggal DESC
+          `;
+          return ok(res, rows);
+        }
+        // Tanpa filter → kembalikan semua perawatan untuk semua motor milik pelanggan ini
         const { rows } = await sql`
           SELECT p.*, m.plat, m.tipe FROM perawatan p
           JOIN motor m ON m.id = p.motor_id
-          WHERE p.motor_id = ${motorId} ORDER BY p.tanggal DESC
+          WHERE m.user_id = ${user.id}
+          ORDER BY p.tanggal DESC
         `;
         return ok(res, rows);
       }
