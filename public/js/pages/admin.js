@@ -289,23 +289,52 @@ G.pages.admin = function (content, sub) {
       <div class="table-wrap"><table class="tbl"><thead><tr>
         <th>Nama</th><th>Kontak</th><th>Asal</th><th>Motor</th><th>Booking aktif</th><th></th>
       </tr></thead><tbody id="tb"></tbody></table></div>`;
-    const tb = content.querySelector('#tb');
-    ui.loading(tb, '');
-    try {
-      const list = await store.all('users');
-      if (!list.length) { tb.innerHTML = `<tr><td colspan="6">${ui.empty('👥', 'Belum ada pelanggan', 'Pelanggan akan muncul di sini setelah mendaftar.')}</td></tr>`; return; }
-      tb.innerHTML = list.map(u => {
-        const wa = ui.waLink(u.no_hp, `Halo ${ui.escapeHTML(u.nama)}, ini admin GARASIN.`);
-        return `<tr>
-          <td><div class="cell-strong">${ui.escapeHTML(u.nama)}</div><div class="kecil muted">${ui.escapeHTML(u.email)}</div></td>
-          <td class="kecil">${ui.escapeHTML(u.no_hp || '-')}</td>
-          <td class="kecil">${ui.escapeHTML(u.asal || '-')}</td>
-          <td>${u.jumlah_motor || 0}</td>
-          <td>${u.jumlah_aktif || 0}</td>
-          <td style="text-align:right">${u.no_hp ? `<a class="btn btn-ghost btn-sm" href="${wa}" target="_blank" rel="noopener">Chat WA</a>` : ''}</td>
-        </tr>`;
-      }).join('');
-    } catch (err) { handleErr(err); }
+    await gambar();
+
+    async function gambar() {
+      const tb = content.querySelector('#tb');
+      ui.loading(tb, '');
+      try {
+        const list = await store.all('users');
+        if (!list.length) {
+          tb.innerHTML = `<tr><td colspan="6">${ui.empty('👥', 'Belum ada pelanggan', 'Pelanggan akan muncul di sini setelah mendaftar.')}</td></tr>`;
+          return;
+        }
+        tb.innerHTML = list.map(u => {
+          const wa = ui.waLink(u.no_hp, `Halo ${ui.escapeHTML(u.nama)}, ini admin GARASIN.`);
+          return `<tr>
+            <td><div class="cell-strong">${ui.escapeHTML(u.nama)}</div><div class="kecil muted">${ui.escapeHTML(u.email)}</div></td>
+            <td class="kecil">${ui.escapeHTML(u.no_hp || '-')}</td>
+            <td class="kecil">${ui.escapeHTML(u.asal || '-')}</td>
+            <td>${u.jumlah_motor || 0}</td>
+            <td>${u.jumlah_aktif || 0}</td>
+            <td style="text-align:right;white-space:nowrap">
+              ${u.no_hp ? `<a class="btn btn-ghost btn-sm" href="${wa}" target="_blank" rel="noopener">Chat WA</a> ` : ''}
+              <button class="btn btn-primary btn-sm"
+                data-hapus="${u.id}"
+                data-nama="${ui.escapeHTML(u.nama)}"
+                data-aktif="${u.jumlah_aktif || 0}">Hapus</button>
+            </td>
+          </tr>`;
+        }).join('');
+
+        tb.querySelectorAll('[data-hapus]').forEach(el => el.addEventListener('click', async () => {
+          const nama = el.dataset.nama;
+          const adaAktif = Number(el.dataset.aktif) > 0;
+          const pesan = `Semua data milik <strong>${ui.escapeHTML(nama)}</strong> akan dihapus permanen, `
+            + `termasuk motor, booking, riwayat perawatan, pembayaran, dan notifikasi.`
+            + (adaAktif
+              ? `<br><br><strong style="color:var(--merah)">⚠️ Pelanggan ini memiliki motor yang sedang tersimpan aktif di garasi.</strong>`
+              : '');
+          if (!(await ui.konfirmasi({ judul: 'Hapus Data Pelanggan', pesan, tombol: 'Ya, hapus permanen', bahaya: true }))) return;
+          try {
+            await store.remove('users', el.dataset.hapus);
+            ui.toast('Pelanggan & seluruh datanya berhasil dihapus.');
+            gambar();
+          } catch (err) { ui.toast(err.message, 'err'); }
+        }));
+      } catch (err) { handleErr(err); }
+    }
   }
 
   // ---------------------------------------------------------------- VERIFIKASI BAYAR
